@@ -8,21 +8,17 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const foundUser = await User.findOne({ email: email });
+    const user = await User.findOne({ email: email });
 
-    if (foundUser) {
-      const verifyPass = await bcrypt.compare(password, foundUser.password);
+    if (user) {
+      const verifyPass = await bcrypt.compare(password, user.password);
       if (verifyPass) {
         // if password is verified then create a token
-        const token = generateToken(res, foundUser._id);
+        const token = generateToken(res, user._id);
         res
           .status(200)
-          .json({ message: "User logged in successfully", foundUser, token });
-      } else {
-        res.status(200).json({ message: "Email or password doesn't exist" });
+          .json({ message: "User logged in successfully", user, token });
       }
-    } else {
-      res.status(401).json({ message: "User not found" });
     }
   } catch (err) {
     // throw new Error("An error occured while login user.", err);
@@ -43,19 +39,16 @@ const registerUser = async (req, res) => {
 
     if (verifyEmail) {
       res.status(400).json({ message: "Email already exists" });
-    } else {
-      // create a new user
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-      const newUser = await User.create({
-        email,
-        password: hashedPassword,
-      });
-      const token = generateToken(res, newUser._id);
-
-      res
-        .status(200)
-        .json({ message: "User created successfully", newUser, token });
     }
+    // create a new user
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const user = await User.create({
+      email,
+      password: hashedPassword,
+    });
+    const token = generateToken(res, user._id);
+
+    res.status(200).json({ message: "User created successfully", user, token });
   } catch (error) {
     // throw new Error("An error occured while registering user.", error);
     console.log(error);
